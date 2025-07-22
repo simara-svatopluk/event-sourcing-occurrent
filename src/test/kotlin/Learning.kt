@@ -56,15 +56,15 @@ class Learning {
         @Test
         fun correctGuess() {
             val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
-            val result = GuessWordCommand("hello").decide(setUp)
-            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedCorrectly("hello"))
+            val result = GuessWordCommand("hello", "Minerva").decide(setUp)
+            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedCorrectly("hello", "Minerva"))
         }
 
         @Test
         fun wrongGuess() {
             val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
-            val result = GuessWordCommand("xxx").decide(setUp)
-            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedWrongly("xxx"))
+            val result = GuessWordCommand("xxx", "Minerva").decide(setUp)
+            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedWrongly("xxx", "Minerva"))
         }
 
         @Test
@@ -111,11 +111,11 @@ class Learning {
             StartNewGameCommand("game1", "hello").decide(events)
         }
         applicationService.execute("game1") { events ->
-            GuessWordCommand("xxx").decide(events)
+            GuessWordCommand("xxx", "Livia").decide(events)
         }
 
         applicationService.execute("game1") { events ->
-            GuessWordCommand("hello").decide(events)
+            GuessWordCommand("hello", "Minerva").decide(events)
         }
 
         eventStore.read("game1").toList().map(::println)
@@ -132,11 +132,16 @@ class Learning {
         }
     }
 
-    data class GameProgress(val gameId: String, val state: State = State.JustStarted, val guessesCount: Int = 0) {
+    data class GameProgress(
+        val gameId: String,
+        val state: State = State.JustStarted,
+        val guessesCount: Int = 0,
+        val whoWon: String? = null
+    ) {
         fun evolve(event: DomainEvent): GameProgress {
             return when (event) {
                 is GameStarted -> this
-                is GuessedCorrectly -> copy(state = State.Won, guessesCount = guessesCount + 1)
+                is GuessedCorrectly -> copy(state = State.Won, guessesCount = guessesCount + 1, whoWon = event.player)
                 is GuessedWrongly -> copy(state = State.InProgress, guessesCount = guessesCount + 1)
             }
         }
@@ -170,20 +175,20 @@ class Learning {
         applicationService.execute("game-1") {
             Stream.of(
                 GameStarted("game1", "hello"),
-                GuessedWrongly("foo"),
-                GuessedWrongly("bar"),
-                GuessedWrongly("xxx"),
-                GuessedCorrectly("hello"),
+                GuessedWrongly("foo", "Minerva"),
+                GuessedWrongly("bar", "Livia"),
+                GuessedWrongly("xxx", "Minerva"),
+                GuessedCorrectly("hello", "Livia"),
             )
         }
 
         applicationService.execute("game-2") {
             Stream.of(
                 GameStarted("game2", "hello"),
-                GuessedWrongly("foo"),
-                GuessedWrongly("bar"),
-                GuessedWrongly("xxx"),
-                GuessedCorrectly("hello"),
+                GuessedWrongly("foo", "Livia"),
+                GuessedWrongly("bar", "Minerva"),
+                GuessedWrongly("xxx", "Livia"),
+                GuessedCorrectly("hello", "Minerva"),
             )
         }
         Thread.sleep(100)
