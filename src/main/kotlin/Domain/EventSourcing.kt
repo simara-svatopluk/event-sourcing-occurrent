@@ -6,8 +6,8 @@ import kotlin.streams.asSequence
 
 sealed class DomainEvent
 data class GameStarted(val gameId: String, val wordToGuess: String) : DomainEvent()
-data class GuessedCorrectly(val gameId: String, val guess: String) : DomainEvent()
-data class GuessedWrongly(val gameId: String, val guess: String) : DomainEvent()
+data class GuessedCorrectly(val guess: String) : DomainEvent()
+data class GuessedWrongly(val guess: String) : DomainEvent()
 
 data class StartNewGameCommand(val gameId: String, val wordToGuess: String) {
     fun decide(events: Stream<DomainEvent>): Stream<DomainEvent> {
@@ -31,9 +31,9 @@ data class GuessWordCommand(val guess: String) {
         requireNotNull(state.wordToGuess)
 
         return if (state.wordToGuess == guess) {
-            GuessedCorrectly(state.gameId, guess)
+            GuessedCorrectly(guess)
         } else {
-            GuessedWrongly(state.gameId, guess)
+            GuessedWrongly(guess)
         }.asStream()
     }
     data class State(val gameId: String? = null, val wordToGuess: String? = null)

@@ -15,7 +15,11 @@ import org.occurrent.application.converter.jackson.JacksonCloudEventConverter
 import org.occurrent.application.service.blocking.generic.GenericApplicationService
 import org.occurrent.eventstore.api.blocking.EventStream
 import org.occurrent.eventstore.inmemory.InMemoryEventStore
+import org.occurrent.filter.Filter.source
+import org.occurrent.subscription.OccurrentSubscriptionFilter.filter
+import org.occurrent.subscription.inmemory.InMemorySubscriptionModel
 import java.net.URI
+import java.net.URI.create
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
@@ -53,14 +57,14 @@ class Learning {
         fun correctGuess() {
             val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
             val result = GuessWordCommand("hello").decide(setUp)
-            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedCorrectly("game1", "hello"))
+            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedCorrectly("hello"))
         }
 
         @Test
         fun wrongGuess() {
             val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
             val result = GuessWordCommand("xxx").decide(setUp)
-            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedWrongly("game1", "xxx"))
+            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedWrongly("xxx"))
         }
 
         @Test
@@ -75,12 +79,9 @@ class Learning {
     @Test
     fun `manual lifecycle`() {
         val eventStore = InMemoryEventStore()
-        val objectMapper = ObjectMapper().apply {
-            registerModule(KotlinModule.Builder().build())
-        }
         val cloudEventConverter = JacksonCloudEventConverter<DomainEvent>(
-            objectMapper,
-            URI.create("com:fairtiq:guess_game")
+            createObjectMapper(),
+            create("com:fairtiq:guess_game")
         )
 
         eventStore.read("game1").let { oldStoredEvents ->
@@ -103,15 +104,8 @@ class Learning {
     @Test
     fun `wrapped into service`() {
         val eventStore = InMemoryEventStore()
-        val objectMapper = ObjectMapper().apply {
-            registerModule(KotlinModule.Builder().build())
-        }
-        val cloudEventConverter = JacksonCloudEventConverter<DomainEvent>(
-            objectMapper,
-            URI.create("com:fairtiq:guess_game")
-        )
 
-        val applicationService = GenericApplicationService(eventStore, cloudEventConverter)
+        val applicationService = GenericApplicationService(eventStore, createEventConverter())
 
         applicationService.execute("game1") { events ->
             StartNewGameCommand("game1", "hello").decide(events)
@@ -125,6 +119,84 @@ class Learning {
         }
 
         eventStore.read("game1").toList().map(::println)
+    }
+
+    object Games {
+        val games: MutableMap<String, GameProgress> = mutableMapOf()
+
+        fun apply(streamId: String, event: DomainEvent) {
+            when (event) {
+                is GameStarted -> games[streamId] = GameProgress(event.gameId)
+                else -> games[streamId] = games.getValue(streamId).evolve(event)
+            }
+        }
+    }
+
+    data class GameProgress(val gameId: String, val state: State = State.JustStarted, val guessesCount: Int = 0) {
+        fun evolve(event: DomainEvent): GameProgress {
+            return when (event) {
+                is GameStarted -> this
+                is GuessedCorrectly -> copy(state = State.Won, guessesCount = guessesCount + 1)
+                is GuessedWrongly -> copy(state = State.InProgress, guessesCount = guessesCount + 1)
+            }
+        }
+
+        enum class State {
+            JustStarted,
+            InProgress,
+            Won,
+        }
+    }
+
+    @Test
+    fun projections() {
+        val subscriptionModel = InMemorySubscriptionModel()
+        val eventConverter = createEventConverter()
+
+        subscriptionModel.subscribe("printing", filter(source(URI.create("com:fairtiq:guess_game")))) {
+            val streamId = it.getExtension("streamid")
+            println("stream: $streamId")
+            println(it)
+            Games.apply(streamId as String, eventConverter.toDomainEvent(it))
+            Games.games.forEach { id, game ->
+                println("$id: $game")
+            }
+            println()
+        }
+
+        val eventStore = InMemoryEventStore(subscriptionModel)
+
+        val applicationService = GenericApplicationService(eventStore, eventConverter)
+        applicationService.execute("game-1") {
+            Stream.of(
+                GameStarted("game1", "hello"),
+                GuessedWrongly("foo"),
+                GuessedWrongly("bar"),
+                GuessedWrongly("xxx"),
+                GuessedCorrectly("hello"),
+            )
+        }
+
+        applicationService.execute("game-2") {
+            Stream.of(
+                GameStarted("game2", "hello"),
+                GuessedWrongly("foo"),
+                GuessedWrongly("bar"),
+                GuessedWrongly("xxx"),
+                GuessedCorrectly("hello"),
+            )
+        }
+        Thread.sleep(100)
+    }
+
+    private fun createEventConverter(): JacksonCloudEventConverter<DomainEvent> =
+        JacksonCloudEventConverter<DomainEvent>(
+            createObjectMapper(),
+            URI.create("com:fairtiq:guess_game")
+        )
+
+    private fun createObjectMapper(): ObjectMapper = ObjectMapper().apply {
+        registerModule(KotlinModule.Builder().build())
     }
 
     /**
