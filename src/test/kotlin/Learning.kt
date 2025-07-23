@@ -1,9 +1,4 @@
-import com.fairtiq.domain.DomainEvent
-import com.fairtiq.domain.GameStarted
-import com.fairtiq.domain.GuessWordCommand
-import com.fairtiq.domain.GuessedCorrectly
-import com.fairtiq.domain.GuessedWrongly
-import com.fairtiq.domain.StartNewGameCommand
+import com.fairtiq.domain.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.cloudevents.CloudEvent
@@ -18,11 +13,10 @@ import org.occurrent.eventstore.inmemory.InMemoryEventStore
 import org.occurrent.filter.Filter.source
 import org.occurrent.subscription.OccurrentSubscriptionFilter.filter
 import org.occurrent.subscription.inmemory.InMemorySubscriptionModel
-import java.net.URI
 import java.net.URI.create
 import java.time.Instant
 import java.time.ZoneOffset
-import java.util.UUID
+import java.util.*
 import java.util.stream.Stream
 import kotlin.jvm.optionals.getOrNull
 import kotlin.test.Test
@@ -33,12 +27,12 @@ class Learning {
     fun `what is event`() {
         val event = CloudEventBuilder.v1()
             .withId(UUID.randomUUID().toString())
-            .withSource(URI.create("com:fairtiq:guess_game"))
+            .withSource(create("com.fairtiq.guessGame"))
             .withType("GameStarted")
             .withTime(Instant.now().atOffset(ZoneOffset.UTC))
             .withDataContentType("application/json")
             .withData("{ \"message\" : \"hello\" }".toByteArray())
-            .build();
+            .build()
 
         val eventStore = InMemoryEventStore()
 
@@ -81,7 +75,7 @@ class Learning {
         val eventStore = InMemoryEventStore()
         val cloudEventConverter = JacksonCloudEventConverter<DomainEvent>(
             createObjectMapper(),
-            create("com:fairtiq:guess_game")
+            create("com.fairtiq.guessGame")
         )
 
         eventStore.read("game1").let { oldStoredEvents ->
@@ -158,7 +152,7 @@ class Learning {
         val subscriptionModel = InMemorySubscriptionModel()
         val eventConverter = createEventConverter()
 
-        subscriptionModel.subscribe("printing", filter(source(URI.create("com:fairtiq:guess_game")))) {
+        subscriptionModel.subscribe("printing", filter(source(create("com.fairtiq.guessGame")))) {
             val streamId = it.getExtension("streamid")
             println("stream: $streamId")
             println(it)
@@ -197,7 +191,7 @@ class Learning {
     private fun createEventConverter(): JacksonCloudEventConverter<DomainEvent> =
         JacksonCloudEventConverter<DomainEvent>(
             createObjectMapper(),
-            URI.create("com:fairtiq:guess_game")
+            create("com.fairtiq.guessGame")
         )
 
     private fun createObjectMapper(): ObjectMapper = ObjectMapper().apply {
