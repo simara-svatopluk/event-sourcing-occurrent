@@ -1,8 +1,7 @@
-package com.fairtiq.domain
+package com.fairtiq
 
 import java.util.stream.Stream
 import kotlin.streams.asSequence
-
 
 sealed class DomainEvent
 data class GameStarted(val gameId: String, val wordToGuess: String) : DomainEvent()
