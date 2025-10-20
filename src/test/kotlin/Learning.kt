@@ -111,36 +111,6 @@ class Learning {
         }
     }
 
-
-    @Test
-    fun projections() {
-        val subscriptionModel = InMemorySubscriptionModel()
-        val eventConverter = createEventConverter()
-
-        subscriptionModel.subscribe("games", filter(source(create("com.fairtiq.guessGame")))) {
-            println(String(it.data.toBytes()))
-            val streamId = it.getExtension("streamid")
-            Games.apply(streamId as String, eventConverter.toDomainEvent(it))
-
-            Games.games.forEach { (id, game) ->
-                println("$id: $game")
-            }
-            println()
-        }
-
-        val eventStore = InMemoryEventStore(subscriptionModel)
-
-        val applicationService = GenericApplicationService(eventStore, eventConverter)
-        applicationService.execute("game-1") {
-            Stream.of(
-                GameStarted("game1", "hello"),
-                GuessedWrongly("xxx", "Minerva"),
-                GuessedCorrectly("hello", "Livia"),
-            )
-        }
-        Thread.sleep(100)
-    }
-
     private fun createEventConverter(): JacksonCloudEventConverter<DomainEvent> =
         JacksonCloudEventConverter<DomainEvent>(
             createObjectMapper(),
