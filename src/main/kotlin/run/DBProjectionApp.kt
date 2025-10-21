@@ -69,16 +69,16 @@ fun main() {
 
     val gamesCollection = database.getCollection("games-projection")
 
-    modelToSubscribe.subscribe(subscriptionId, filter(source(create("com.fairtiq.guessGame"))), startAt) {
-        val data = String(it.data!!.toBytes())
-        println("${it.type}: $data")
-        val streamId = it.getExtension("streamid") as String
+    modelToSubscribe.subscribe(subscriptionId, filter(source(create("com.fairtiq.guessGame"))), startAt) { cloudEvent ->
+        val data = String(cloudEvent.data!!.toBytes())
+        println("${cloudEvent.type}: $data")
+        val streamId = cloudEvent.getExtension("streamid") as String
 
-        val games: Games = loadGames(gamesCollection, objectMapper)
+        val games: Games = loadGamesFromMong(gamesCollection, objectMapper)
 
-        games.applyEvent(streamId, eventConverter.toDomainEvent(it))
+        games.applyEvent(streamId, eventConverter.toDomainEvent(cloudEvent))
 
-        storeGames(games, objectMapper, gamesCollection)
+        storeGamesToMongo(games, objectMapper, gamesCollection)
 
         games.forEach { (id, game) ->
             println("$id: $game")
@@ -87,7 +87,7 @@ fun main() {
     }.waitUntilStarted()
 }
 
-private fun storeGames(
+private fun storeGamesToMongo(
     games: Games,
     objectMapper: ObjectMapper,
     gamesCollection: MongoCollection<Document>
@@ -100,7 +100,7 @@ private fun storeGames(
     }
 }
 
-private fun loadGames(
+private fun loadGamesFromMong(
     gamesCollection: MongoCollection<Document>,
     objectMapper: ObjectMapper
 ): MutableMap<String, GameProgress> = gamesCollection.find().map { document ->

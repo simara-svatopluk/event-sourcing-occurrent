@@ -26,12 +26,12 @@ fun main() {
         RetryStrategy.retry().maxAttempts(3)
     )
 
-    subscriptionModel.subscribe("games", filter(source(create("com.fairtiq.guessGame")))) {
-        val data = String(it.data!!.toBytes())
-        println("${it.type}: $data")
-        val streamId = it.getExtension("streamid")
+    subscriptionModel.subscribe("games", filter(source(create("com.fairtiq.guessGame")))) { cloudEvent ->
+        val data = String(cloudEvent.data!!.toBytes())
+        println("${cloudEvent.type}: $data")
+        val streamId = cloudEvent.getExtension("streamid")
 
-        GamesInMemory.applyEvent(streamId as String, eventConverter.toDomainEvent(it))
+        GamesInMemory.applyEvent(streamId as String, eventConverter.toDomainEvent(cloudEvent))
 
         GamesInMemory.games.forEach { (id, game) ->
             println("$id: $game")

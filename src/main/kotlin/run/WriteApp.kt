@@ -24,8 +24,9 @@ fun main() {
 
     val applicationService = GenericApplicationService(eventStore, createEventConverter())
 
-    generateSequence(0) { it + 1 }.forEach { gameNumber ->
+    (1..100).forEach { gameNumber ->
         println("Game $gameNumber started. Generating events...")
+
         playRandomGame("game-$gameNumber").forEach { event ->
             applicationService.execute("game-$gameNumber") {
                 Stream.of(event).also {

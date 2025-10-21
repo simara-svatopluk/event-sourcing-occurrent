@@ -20,7 +20,7 @@ data class StartNewGameCommand(val gameId: String, val wordToGuess: String) {
 
     private fun guardStarted(events: Stream<DomainEvent>) {
         if (events.anyMatch { it is GameStarted }) {
-            throw IllegalStateException("Game with ID '$gameId' has already been started.")
+            error("Game with ID '$gameId' has already been started.")
         }
     }
 }
@@ -58,7 +58,7 @@ fun playGame(
 ): List<DomainEvent> {
     val init = listOf<DomainEvent>(GameStarted(gameId, wordToGuess))
 
-    val events = wordsGuessed.fold(init) { events, it ->
+    val events = wordsGuessed.fold(init) { events, word ->
         val lastEvent = events.last()
         if (lastEvent is GuessedCorrectly) {
             return@fold events
@@ -69,7 +69,7 @@ fun playGame(
             is GameStarted -> players.first()
             is GuessedCorrectly -> error("This is not possible")
         }
-        val newEvents = GuessWordCommand(it, currentPlayer).decide(events.stream())
+        val newEvents = GuessWordCommand(word, currentPlayer).decide(events.stream())
         events + newEvents.toList()
     }
     return events
