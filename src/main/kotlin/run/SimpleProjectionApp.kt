@@ -31,7 +31,6 @@ fun main() {
         println("${it.type}: $data")
         val streamId = it.getExtension("streamid")
 
-
         Games.apply(streamId as String, eventConverter.toDomainEvent(it))
 
         Games.games.forEach { (id, game) ->
@@ -39,9 +38,4 @@ fun main() {
         }
         println()
     }
-
-    // Keep the process alive to receive events
-    Runtime.getRuntime().addShutdownHook(Thread {
-        println("bye!")
-    })
 }

@@ -137,12 +137,31 @@
             <artifactId>subscription-inmemory</artifactId>
             <version>0.19.11</version>
         </dependency>
+        <dependency>
+            <groupId>org.occurrent</groupId>
+            <artifactId>catchup-subscription</artifactId>
+            <version>0.19.11</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.occurrent</groupId>
             <artifactId>eventstore-mongodb-native</artifactId>
             <version>0.19.11</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.occurrent</groupId>
+            <artifactId>subscription-mongodb-native-blocking-position-storage</artifactId>
+            <version>0.19.11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.occurrent</groupId>
+            <artifactId>durable-subscription</artifactId>
+            <version>0.19.11</version>
+        </dependency>
+
 
 
         <dependency>
