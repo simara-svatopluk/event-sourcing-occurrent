@@ -44,6 +44,4 @@ fun main() {
     Runtime.getRuntime().addShutdownHook(Thread {
         println("bye!")
     })
-    // Block forever
-    while (true) Thread.sleep(1_000)
 }
