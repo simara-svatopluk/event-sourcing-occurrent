@@ -44,9 +44,9 @@ fun main() {
         println("${it.type}: $data")
         val streamId = it.getExtension("streamid")
 
-        Games.apply(streamId as String, eventConverter.toDomainEvent(it))
+        GamesInMemory.applyEvent(streamId as String, eventConverter.toDomainEvent(it))
 
-        Games.games.forEach { (id, game) ->
+        GamesInMemory.games.forEach { (id, game) ->
             println("$id: $game")
         }
         println()

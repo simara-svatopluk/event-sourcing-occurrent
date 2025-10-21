@@ -1,6 +1,6 @@
 package com.fairtiq.run
 
-import com.fairtiq.Games
+import com.fairtiq.GamesInMemory
 import com.fairtiq.createEventConverter
 import com.fairtiq.dbName
 import com.fairtiq.eventCollectionName
@@ -31,9 +31,9 @@ fun main() {
         println("${it.type}: $data")
         val streamId = it.getExtension("streamid")
 
-        Games.apply(streamId as String, eventConverter.toDomainEvent(it))
+        GamesInMemory.applyEvent(streamId as String, eventConverter.toDomainEvent(it))
 
-        Games.games.forEach { (id, game) ->
+        GamesInMemory.games.forEach { (id, game) ->
             println("$id: $game")
         }
         println()

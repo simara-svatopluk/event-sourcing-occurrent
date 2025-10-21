@@ -1,13 +1,18 @@
 package com.fairtiq
 
-object Games {
-    val games: MutableMap<String, GameProgress> = mutableMapOf()
+typealias Games =  MutableMap<String, GameProgress>
 
-    fun apply(streamId: String, event: DomainEvent) {
-        when (event) {
-            is GameStarted -> games[streamId] = GameProgress(event.gameId)
-            else -> games[streamId] = games.getValue(streamId).evolve(event)
-        }
+object GamesInMemory {
+    val games: Games = mutableMapOf()
+    fun applyEvent(streamId: String, event: DomainEvent) {
+        games.applyEvent(streamId, event)
+    }
+}
+
+fun Games.applyEvent(streamId: String, event: DomainEvent) {
+    when (event) {
+        is GameStarted -> this[streamId] = GameProgress(event.gameId)
+        else -> this[streamId] = getValue(streamId).evolve(event)
     }
 }
 

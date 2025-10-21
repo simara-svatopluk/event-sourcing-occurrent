@@ -1,11 +1,18 @@
 package com.fairtiq.run
 
-import com.fairtiq.GamesInMemory
+import com.fairtiq.GameProgress
+import com.fairtiq.Games
+import com.fairtiq.applyEvent
 import com.fairtiq.createEventConverter
+import com.fairtiq.createObjectMapper
 import com.fairtiq.dbName
 import com.fairtiq.eventCollectionName
 import com.fairtiq.mongoUri
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.mongodb.client.MongoClients
+import com.mongodb.client.MongoCollection
+import com.mongodb.client.model.ReplaceOptions
+import org.bson.Document
 import org.occurrent.eventstore.mongodb.nativedriver.EventStoreConfig
 import org.occurrent.eventstore.mongodb.nativedriver.MongoEventStore
 import org.occurrent.filter.Filter.source
@@ -26,6 +33,9 @@ fun main() {
     val eventConverter = createEventConverter()
     val mongoClient = MongoClients.create(mongoUri)
     val database = mongoClient.getDatabase(dbName)
+    val objectMapper = createObjectMapper()
+
+    database.createCollection("games-projection")
 
     val eventStore = MongoEventStore(
         mongoClient,
@@ -48,7 +58,8 @@ fun main() {
             useSubscriptionPositionStorage(positionStorage)
         )
     )
-    val position = positionStorage.read("games-durable")
+    val subscriptionId = "games-durable-db"
+    val position = positionStorage.read(subscriptionId)
 
     val (modelToSubscribe, startAt) = if (position == null) {
         catchup to StartAtTime.beginningOfTime()
@@ -56,16 +67,47 @@ fun main() {
         durable to StartAt.subscriptionModelDefault()
     }
 
-    modelToSubscribe.subscribe("games-durable", filter(source(create("com.fairtiq.guessGame"))), startAt) {
+    val gamesCollection = database.getCollection("games-projection")
+
+    modelToSubscribe.subscribe(subscriptionId, filter(source(create("com.fairtiq.guessGame"))), startAt) {
         val data = String(it.data!!.toBytes())
         println("${it.type}: $data")
-        val streamId = it.getExtension("streamid")
+        val streamId = it.getExtension("streamid") as String
 
-        GamesInMemory.applyEvent(streamId as String, eventConverter.toDomainEvent(it))
+        val games: Games = loadGames(gamesCollection, objectMapper)
 
-        GamesInMemory.games.forEach { (id, game) ->
+        games.applyEvent(streamId, eventConverter.toDomainEvent(it))
+
+        storeGames(games, objectMapper, gamesCollection)
+
+        games.forEach { (id, game) ->
             println("$id: $game")
         }
         println()
     }.waitUntilStarted()
 }
+
+private fun storeGames(
+    games: Games,
+    objectMapper: ObjectMapper,
+    gamesCollection: MongoCollection<Document>
+) {
+    games.forEach { game ->
+        val document = Document("_id", game.key).append("value", objectMapper.writeValueAsString(game.value))
+
+        gamesCollection
+            .replaceOne(Document("_id", game.key), document, ReplaceOptions().upsert(true))
+    }
+}
+
+private fun loadGames(
+    gamesCollection: MongoCollection<Document>,
+    objectMapper: ObjectMapper
+): MutableMap<String, GameProgress> = gamesCollection.find().map { document ->
+    val id = document["_id"] as String
+    val gameProgress = objectMapper.readValue(
+        document["value"] as String,
+        GameProgress::class.java
+    )
+    id to gameProgress
+}.toMap().toMutableMap()
