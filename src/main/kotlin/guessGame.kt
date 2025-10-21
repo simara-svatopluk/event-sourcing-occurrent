@@ -3,11 +3,14 @@ package com.fairtiq
 import java.util.stream.Stream
 import kotlin.streams.asSequence
 
+// Events: The gold!
 sealed class DomainEvent
 data class GameStarted(val gameId: String, val wordToGuess: String) : DomainEvent()
 data class GuessedCorrectly(val guess: String, val player: String) : DomainEvent()
 data class GuessedWrongly(val guess: String, val player: String) : DomainEvent()
 
+
+// Write model
 data class StartNewGameCommand(val gameId: String, val wordToGuess: String) {
     fun decide(events: Stream<DomainEvent>): Stream<DomainEvent> {
         guardStarted(events)
@@ -45,6 +48,8 @@ data class GuessWordCommand(val guess: String, val player: String) {
     }
 }
 
+
+// "real" work
 fun playGame(
     gameId: String,
     players: List<String>,
@@ -72,7 +77,7 @@ fun playGame(
 
 private fun List<String>.nextPlayer(current: String) = get((indexOf(current) + 1) % size)
 
-fun playRandomGame(gameId: String = "game1"): List<DomainEvent> {
+fun playRandomGame(gameId: String = "game1", wordCount: Int = 5): List<DomainEvent> {
 
     val words = setOf(
         "horizon",
@@ -97,8 +102,8 @@ fun playRandomGame(gameId: String = "game1"): List<DomainEvent> {
         "pulse"
     )
 
-    val wordToGuess = words.random()
-    val shuffled = words.shuffled()
+    val shuffled = words.shuffled().take(wordCount)
+    val wordToGuess = shuffled.random()
     val players = listOf("Roberto", "Viturin")
 
     val events = playGame(gameId, players, wordToGuess, shuffled)
