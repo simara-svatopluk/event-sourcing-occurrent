@@ -4,22 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.cloudevents.CloudEvent
 import io.cloudevents.core.builder.CloudEventBuilder
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.junit.jupiter.api.Nested
 import org.occurrent.application.converter.jackson.JacksonCloudEventConverter
 import org.occurrent.application.service.blocking.generic.GenericApplicationService
 import org.occurrent.eventstore.api.blocking.EventStream
 import org.occurrent.eventstore.inmemory.InMemoryEventStore
-import org.occurrent.filter.Filter.source
-import org.occurrent.subscription.OccurrentSubscriptionFilter.filter
-import org.occurrent.subscription.inmemory.InMemorySubscriptionModel
 import java.net.URI.create
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.*
 import java.util.stream.Stream
-import kotlin.jvm.optionals.getOrNull
 import kotlin.test.Test
 
 class Learning {
@@ -43,31 +36,6 @@ class Learning {
         eventStream.events().toList().map {
             println(it)
             println(String(it.data!!.toBytes()))
-        }
-    }
-
-    @Nested
-    inner class Domain {
-        @Test
-        fun correctGuess() {
-            val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
-            val result = GuessWordCommand("hello", "Minerva").decide(setUp)
-            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedCorrectly("hello", "Minerva"))
-        }
-
-        @Test
-        fun wrongGuess() {
-            val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
-            val result = GuessWordCommand("xxx", "Minerva").decide(setUp)
-            assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedWrongly("xxx", "Minerva"))
-        }
-
-        @Test
-        fun gameAlreadyStarted() {
-            val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
-            assertThatThrownBy {
-                StartNewGameCommand("game1", "hello").decide(setUp)
-            }
         }
     }
 
@@ -124,7 +92,6 @@ class Learning {
 
     /**
      * TODO
-     * * MongoDB
      * * explain concurrency
      */
 
@@ -134,11 +101,3 @@ class Learning {
      * * dynamic consistency boundary
      */
 }
-
-
-
-
-
-
-
-

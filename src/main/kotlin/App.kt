@@ -50,15 +50,7 @@ fun main() {
     val applicationService = GenericApplicationService(eventStore, eventConverter)
 
     applicationService.execute("game-1") {
-        Stream.of(
-            GameStarted("game1", "hello"),
-            GuessedWrongly("xxx", "Minerva"),
-            GuessedCorrectly("hello", "Livia"),
-        )
-    }
-
-    eventStore.all().toList().takeLast(5).forEach { event ->
-        println(event)
+        playRandomGame("game-1").stream()
     }
 
     // Keep the process alive to receive events

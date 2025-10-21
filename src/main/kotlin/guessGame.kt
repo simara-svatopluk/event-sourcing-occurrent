@@ -43,7 +43,66 @@ data class GuessWordCommand(val guess: String, val player: String) {
             else -> state
         }
     }
+}
 
+fun playGame(
+    gameId: String,
+    players: List<String>,
+    wordToGuess: String,
+    wordsGuessed: List<String>
+): List<DomainEvent> {
+    val init = listOf<DomainEvent>(GameStarted(gameId, wordToGuess))
+
+    val events = wordsGuessed.fold(init) { events, it ->
+        val lastEvent = events.last()
+        if (lastEvent is GuessedCorrectly) {
+            return@fold events
+        }
+
+        val currentPlayer = when (lastEvent) {
+            is GuessedWrongly -> players.nextPlayer(lastEvent.player)
+            is GameStarted -> players.first()
+            is GuessedCorrectly -> error("This is not possible")
+        }
+        val newEvents = GuessWordCommand(it, currentPlayer).decide(events.stream())
+        events + newEvents.toList()
+    }
+    return events
+}
+
+private fun List<String>.nextPlayer(current: String) = get((indexOf(current) + 1) % size)
+
+fun playRandomGame(gameId: String = "game1"): List<DomainEvent> {
+
+    val words = setOf(
+        "horizon",
+        "cascade",
+        "ember",
+        "whisper",
+        "compass",
+        "harbor",
+        "journey",
+        "meadow",
+        "serenity",
+        "anchor",
+        "twilight",
+        "echo",
+        "velocity",
+        "wander",
+        "silhouette",
+        "haven",
+        "momentum",
+        "radiant",
+        "solace",
+        "pulse"
+    )
+
+    val wordToGuess = words.random()
+    val shuffled = words.shuffled()
+    val players = listOf("Roberto", "Viturin")
+
+    val events = playGame(gameId, players, wordToGuess, shuffled)
+    return events
 }
 
 private fun <T> T.asStream(): Stream<T> {
