@@ -16,21 +16,21 @@ import java.util.concurrent.Executors
 fun main() {
     val eventConverter = createEventConverter()
     val mongoClient = MongoClients.create(mongoUri)
-
     val database = mongoClient.getDatabase(dbName)
-    val subscriptionModel = NativeMongoSubscriptionModel(
-        database,
-        eventCollectionName,
-        TimeRepresentation.RFC_3339_STRING,
-        Executors.newCachedThreadPool(),
-        RetryStrategy.retry().maxAttempts(3)
-    )
 
     val eventStore = MongoEventStore(
         mongoClient,
         dbName,
         eventCollectionName,
         EventStoreConfig(TimeRepresentation.RFC_3339_STRING)
+    )
+
+    val subscriptionModel = NativeMongoSubscriptionModel(
+        database,
+        eventCollectionName,
+        TimeRepresentation.RFC_3339_STRING,
+        Executors.newCachedThreadPool(),
+        RetryStrategy.retry().maxAttempts(3)
     )
 
     val catchup = CatchupSubscriptionModel(
