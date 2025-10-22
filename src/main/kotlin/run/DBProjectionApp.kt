@@ -76,11 +76,11 @@ fun main() {
 
         val games: Games = loadGamesFromMong(gamesCollection, objectMapper)
 
-        games.applyEvent(streamId, eventConverter.toDomainEvent(cloudEvent))
+        val newGames = games.applyEvent(streamId, eventConverter.toDomainEvent(cloudEvent))
 
-        storeGamesToMongo(games, objectMapper, gamesCollection)
+        storeGamesToMongo(newGames, objectMapper, gamesCollection)
 
-        games.forEach { (id, game) ->
+        newGames.forEach { (id, game) ->
             println("$id: $game")
         }
         println()
