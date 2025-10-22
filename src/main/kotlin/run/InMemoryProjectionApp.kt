@@ -22,7 +22,7 @@ fun main() {
         mongoClient,
         dbName,
         eventCollectionName,
-        EventStoreConfig(TimeRepresentation.RFC_3339_STRING)
+        EventStoreConfig(TimeRepresentation.RFC_3339_STRING),
     )
 
     val subscriptionModel = NativeMongoSubscriptionModel(
@@ -30,7 +30,6 @@ fun main() {
         eventCollectionName,
         TimeRepresentation.RFC_3339_STRING,
         Executors.newCachedThreadPool(),
-        RetryStrategy.retry().maxAttempts(3)
     )
 
     val catchup = CatchupSubscriptionModel(

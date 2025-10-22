@@ -31,14 +31,14 @@ fun main() {
         mongoClient,
         dbName,
         eventCollectionName,
-        EventStoreConfig(TimeRepresentation.RFC_3339_STRING)
+        EventStoreConfig(TimeRepresentation.RFC_3339_STRING),
     )
 
     val subscriptionModel = NativeMongoSubscriptionModel(
         database,
         eventCollectionName,
         TimeRepresentation.RFC_3339_STRING,
-        Executors.newCachedThreadPool()
+        Executors.newCachedThreadPool(),
     )
 
     val positionStorage = NativeMongoSubscriptionPositionStorage(database, "subscription-positions")

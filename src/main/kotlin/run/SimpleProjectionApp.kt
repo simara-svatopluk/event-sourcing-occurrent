@@ -23,7 +23,6 @@ fun main() {
         eventCollectionName,
         TimeRepresentation.RFC_3339_STRING,
         Executors.newCachedThreadPool(),
-        RetryStrategy.retry().maxAttempts(3)
     )
 
     subscriptionModel.subscribe("games", filter(source(create("com.fairtiq.guessGame")))) { cloudEvent ->
