@@ -8,7 +8,6 @@ import com.fairtiq.mongoUri
 import com.mongodb.client.MongoClients
 import org.occurrent.filter.Filter.source
 import org.occurrent.mongodb.timerepresentation.TimeRepresentation
-import org.occurrent.retry.RetryStrategy
 import org.occurrent.subscription.OccurrentSubscriptionFilter.filter
 import org.occurrent.subscription.mongodb.nativedriver.blocking.NativeMongoSubscriptionModel
 import java.net.URI.create

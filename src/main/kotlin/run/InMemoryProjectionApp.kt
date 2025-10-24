@@ -5,7 +5,6 @@ import com.mongodb.client.MongoClients
 import org.occurrent.eventstore.mongodb.nativedriver.EventStoreConfig
 import org.occurrent.eventstore.mongodb.nativedriver.MongoEventStore
 import org.occurrent.mongodb.timerepresentation.TimeRepresentation
-import org.occurrent.retry.RetryStrategy
 import org.occurrent.subscription.blocking.durable.catchup.CatchupSubscriptionModel
 import org.occurrent.subscription.blocking.durable.catchup.CatchupSubscriptionModelConfig
 import org.occurrent.subscription.blocking.durable.catchup.SubscriptionPositionStorageConfig
