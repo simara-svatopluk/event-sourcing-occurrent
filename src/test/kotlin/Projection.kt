@@ -6,7 +6,7 @@ import kotlin.test.Test
 class Projection {
     @Test
     fun projected() {
-        var games: Games = mapOf()
+        var games: Map<String, GameProgress> = mapOf()
         val testCases = mapOf(
             GameStarted("game-1", "wolf")
                     to GameProgress("game-1", GameProgress.State.JustStarted, 0),
