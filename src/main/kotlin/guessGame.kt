@@ -75,33 +75,32 @@ fun playGame(
     return events
 }
 
-private fun List<String>.nextPlayer(current: String) = get((indexOf(current) + 1) % size)
+fun List<String>.nextPlayer(current: String) = get((indexOf(current) + 1) % size)
+
+val words = setOf(
+    "horizon",
+    "cascade",
+    "ember",
+    "whisper",
+    "compass",
+    "harbor",
+    "journey",
+    "meadow",
+    "serenity",
+    "anchor",
+    "twilight",
+    "echo",
+    "velocity",
+    "wander",
+    "silhouette",
+    "haven",
+    "momentum",
+    "radiant",
+    "solace",
+    "pulse"
+)
 
 fun playRandomGame(gameId: String = "game1", wordCount: Int = 5): List<DomainEvent> {
-
-    val words = setOf(
-        "horizon",
-        "cascade",
-        "ember",
-        "whisper",
-        "compass",
-        "harbor",
-        "journey",
-        "meadow",
-        "serenity",
-        "anchor",
-        "twilight",
-        "echo",
-        "velocity",
-        "wander",
-        "silhouette",
-        "haven",
-        "momentum",
-        "radiant",
-        "solace",
-        "pulse"
-    )
-
     val shuffled = words.shuffled().take(wordCount)
     val wordToGuess = shuffled.random()
     val players = listOf("Roberto", "Viturin")

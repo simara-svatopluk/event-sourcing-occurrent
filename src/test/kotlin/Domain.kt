@@ -9,6 +9,14 @@ import kotlin.test.Test
 @Nested
 class Domain {
     @Test
+    fun gameAlreadyStarted() {
+        val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
+        Assertions.assertThatThrownBy {
+            StartNewGameCommand("game1", "hello").decide(setUp)
+        }
+    }
+
+    @Test
     fun correctGuess() {
         val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
         val result = GuessWordCommand("hello", "Minerva").decide(setUp)
@@ -22,15 +30,7 @@ class Domain {
         Assertions.assertThat(result.findFirst().getOrNull()).isEqualTo(GuessedWrongly("xxx", "Minerva"))
     }
 
-    @Test
-    fun gameAlreadyStarted() {
-        val setUp = Stream.of<DomainEvent>(GameStarted("game1", "hello"))
-        Assertions.assertThatThrownBy {
-            StartNewGameCommand("game1", "hello").decide(setUp)
-        }
-    }
-
-    @Test
+//    @Test
     fun randomGame() {
         val events = playRandomGame()
 

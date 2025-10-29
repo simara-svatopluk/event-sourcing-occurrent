@@ -20,12 +20,11 @@ data class GameProgress(
     val gameId: String,
     val state: State = State.JustStarted,
     val guessesCount: Int = 0,
-    val whoWon: String? = null
 ) {
     fun evolve(event: DomainEvent): GameProgress {
         return when (event) {
             is GameStarted -> this
-            is GuessedCorrectly -> copy(state = State.Won, guessesCount = guessesCount + 1, whoWon = event.player)
+            is GuessedCorrectly -> copy(state = State.Won, guessesCount = guessesCount + 1)
             is GuessedWrongly -> copy(state = State.InProgress, guessesCount = guessesCount + 1)
         }
     }
